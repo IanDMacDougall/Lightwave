@@ -2,9 +2,9 @@
 Project: Lightwave Communications
 Authors: Ian MacDougall, Gage Pavia
 Date Created: 12 October 2023
-Last Modified: 1 December 2023
+Last Modified: 15 September 2025
 File Description: Contains utility functions and helpers used in ui.py.
-Repository: https://github.com/macdougalliatwit/lightwave
+Repository: https://github.com/IanDMacDougall/Lightwave
 """
 
 #

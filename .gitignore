@@ -1,6 +1,7 @@
 # python Files
 /venv
 /__pycache__
+/connection/__pycache__
 
 
 # User Specific Files

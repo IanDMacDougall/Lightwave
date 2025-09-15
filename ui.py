@@ -2,9 +2,9 @@
 Project: Lightwave Communications
 Authors: Ian MacDougall, Gage Pavia
 Date Created: 12 October 2023
-Last Modified: 2 September 2025
+Last Modified: 15 September 2025
 File Description: Manages the user interface components for the application.
-Repository: https://github.com/macdougalliatwit/lightwave
+Repository: https://github.com/IanDMacDougall/Lightwave
 """
 
 #
