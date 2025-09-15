@@ -1,0 +1,8 @@
+# python Files
+/venv
+/__pycache__
+
+
+# User Specific Files
+/data
+
