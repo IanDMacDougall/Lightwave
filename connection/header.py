@@ -14,31 +14,24 @@ import numpy as np
 import time
 
 class header:
-    # variables
-    width = 640
-    height = 480
+    def __init__(self):    
+        # variables
+        self.width = 640
+        self.height = 480
 
-    # Header structure: [data type (1 byte) | length (4 bytes) | timestamp (8 bytes)]
-    # Using struct format: B = unsigned char, I = unsigned int, Q = unsigned long long
-    HEADER_FORMAT = 'B I I Q'  
-    header_size = struct.calcsize( HEADER_FORMAT )
+        # Header structure: [data type (1 byte) | length (4 bytes) | timestamp (8 bytes)]
+        # Using struct format: B = unsigned char, I = unsigned int, Q = unsigned long long
+        self.HEADER_FORMAT = 'B I I Q'  
+        self.header_size = struct.calcsize( self.HEADER_FORMAT )
 
-    # Types of data being sent & recieved
-    AUDIO_TYPE = 0
-    VIDEO_TYPE = 0
-    CHAT_TYPE = 0
+        # Types of data being sent & recieved
+        self.AUDIO_TYPE = 0
+        self.VIDEO_TYPE = 1
+        self.CHAT_TYPE = 2
 
-    audio_queue = None
-    video_queue = None
-    chat_queue = None
-    chatConnectClass = None
-
-
-    # Statistic variables
-    audio_latency = 0
-    video_latency = 0
-    chat__latency = 0
-    packetLossPercent = 0
+        self.audio_queue = None
+        self.video_queue = None
+        self.chat_queue = None
 
 
 
@@ -86,8 +79,7 @@ class header:
                 try:
                     while self.video_queue.full():
                         self.video_queue.get_nowait()
-                        self.video_queue.task_done()
-                    self.video_queue.put( cv2.resize( cv2.imdecode( pickle.loads( data_payload ), cv2.IMREAD_COLOR ), ( header.width, header.height ) ) )
+                    self.video_queue.put( cv2.resize( cv2.imdecode( pickle.loads( data_payload ), cv2.IMREAD_COLOR ), ( self.width, self.height ) ) )
                 except Exception as E:
                     print( " ", E )
             
@@ -105,14 +97,14 @@ class header:
 
 
     # Sets the queue
-    def setAudioQueue(self, audio_queue):
+    def set_audio_queue(self, audio_queue):
         self.audio_queue = audio_queue
 
-    def setVideoQueue(self,video_queue):
+    def set_video_queue(self,video_queue):
         self.video_queue = video_queue
 
-    def setChatConnectClass(self, chatConnect):
-        self.chatConnectClass = chatConnect
+    def set_chat_queue(self, chat_queue):
+        self.chat_queue = chat_queue
 
 
     # Get

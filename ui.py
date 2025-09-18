@@ -15,7 +15,7 @@ import csv
 from datetime import datetime as dt
 
 from PyQt5.QtCore import QDateTime, QDate, Qt, QTime, QTimer, pyqtSlot
-from PyQt5.QtGui import QPixmap, QPainter, QColor, QBrush
+from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import (QApplication, QCalendarWidget, QCheckBox, QComboBox,
                              QDialog, QDialogButtonBox, QDateTimeEdit, QFileDialog,
                              QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
@@ -23,13 +23,16 @@ from PyQt5.QtWidgets import (QApplication, QCalendarWidget, QCheckBox, QComboBox
                              QSlider, QSplashScreen, QTabWidget, QTableWidget, QTableWidgetItem, 
                              QTextEdit, QTimeEdit, QVBoxLayout, QWidget, QHeaderView, QInputDialog)
 
-from header import header
-from audioConnect import audioConnect
-from videoConnect import videoConnect
+
+from connection.header import header
+# from connection.audio import 
+from connection.video import videoConnect
+# from connection.chat import
+
 
 headerClass = header()
-audioConnectClass = audioConnect()
-videoConnectClass = videoConnect()
+#audioConnectClass = audioConnect()
+#videoConnectClass = videoConnect()
 from utilities import *
 
 # needed for linux
@@ -409,8 +412,8 @@ class SettingsTab(QWidget):
     Runs when you click Save Settings button
     '''
     def save_settings(self):
-        audioConnectClass.set_volume_level(audio_volume_slider.value())
-        videoConnectClass.set_resolution(eval(self.resolution_combobox.currentText()))
+        #audioConnectClass.set_volume_level(audio_volume_slider.value())
+        #videoConnectClass.set_resolution(eval(self.resolution_combobox.currentText()))
 
         volume = audio_volume_slider.value()
         notification = notifications_checkbox.isChecked()
@@ -731,6 +734,27 @@ class AboutTab(QWidget):
         layout.addWidget(credits_text)
         
         self.setLayout(layout)  
+
+
+'''
+Client active window
+'''
+class ClientWindow(QWidget):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setWindowTitle("Client Communications")
+
+        self.setGeometry(100, 100, 800, 600)  # Set window size
+        self.setFixedSize(100, 800)  # Enforce a fixed size for window
+
+
+
+
+
+
+
+
+
 
 '''
 Application launch

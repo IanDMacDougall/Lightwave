@@ -25,7 +25,7 @@ class videoConnect:
         self.camera.set(4, height)
 
         self.video_queue = queue.Queue(maxsize=10)
-        self.user_video_queue = queue.Queue(maxsize=10)
+        self.user_video_queue = queue.Queue(maxsize=20)
 
         self.sendFrameDuration = 0
         self.receiveFrameDuration = 0
@@ -39,9 +39,9 @@ class videoConnect:
     """
     Records the video data from user and 
     """
-    def get_video(self, cameraOn=True, sending=True):
+    def get_video(self, cameraOn=True):
 
-        while sending:
+        while self.sending:
 
             # retrives image and saves it to frame
             #   if fails retval is false
@@ -50,8 +50,6 @@ class videoConnect:
             if not retval:
                 print("False")
                 raise Exception("Could not retrieve from camera")
-            else:
-                print(self.camera.isOpened())
 
 
             # Adds frame to queue for user playback
@@ -62,9 +60,8 @@ class videoConnect:
                     except queue.Empty:
                         break
             else:
-                self.user_video_queue.put(frame)
-
-
+                self.user_video_queue.put_nowait(frame)
+                self.user_video_queue.put_nowait(frame)
 
 
 
@@ -72,47 +69,59 @@ class videoConnect:
     Uses socket and cv2 to record video data and send it to the client
     """
     def send_video(self, socket, client_address):
-        send_last_time = time.time()
-
-
-
-
-
-
-
-
-    """
-    Uses socket to receive a frame that will be displayed
-    """
-    def play_client_video(self, socket, client_address):
-        recieve_last_time = time.time()
-
-
-
-
-
-
-    """
-    Uses socket to receive a frame that will be displayed
-    """
-    def play_user_video(self):
-        while True:
+        while self.sending:
             try:
-                cv2.imshow("my camera", self.user_video_queue.get_nowait())
-                cv2.waitKey(1)
-            except queue.Empty:
+                frame = self.user_video_queue.get_nowait()
+
+                sendLastTime = time.time()
+
+                retval, bufferSend = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 40] )
+                self.headerClass.send_data(socket=socket, addr=client_address, data_type=1, seq_num=0, data_send=pickle.dump(bufferSend), timestamp=int(time.time()))
+                
+                self.sendFrameDuration = time.time() - sendLastTime()
+            except Exception as E:
+                print(f"Error in send_video: {E}")
                 pass
 
 
 
+    """
+    Uses socket to receive a frame that will be displayed
+    """
+    def recieve_video(self, socket):
+        while self.sending:
+            try:
+                recieveLastTime = time.time()
+
+                header.receive_data(socket=socket)
+                
+                self.receiveFrameDuration = time.time() - recieveLastTime
+            except Exception as E:
+                print(f"Error in recieve_video: {E}")
+                pass
 
 
+    """
+        Displays the frames of the client & the user.
 
+    User:
+        User frame is grabbed from same frame being sent to the other user
 
+    Client:
+        Client frame is recieved by the heaeder class and being inputed into the video_queue
+    """
+    def play_video(self):
+        while self.sending:
+            try:
+                if not self.user_video_queue.empty():
+                    cv2.imshow("my camera", self.user_video_queue.get_nowait())
+                if not self.video_queue.empty():
+                    cv2.imshow("Client camera", self.video_queue.get_nowait())
+            except queue.Empty:
+                pass
 
-
-
-
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
 
 
 
@@ -122,20 +131,21 @@ class videoConnect:
     Once over ends camera
     """
     def network_video(self, socket, client_address):
-        self.headerClass.setVideoQueue(video_queue=self.video_queue)
+        self.headerClass.set_video_queue(video_queue=self.video_queue)
 
         get_thread = threading.Thread(target=self.get_video, args=(), name="getVideoThread")
-        send_thread = threading.Thread(target=self.send_video, args=(), name="sendVideoThread")
-        recieve_thread = threading.Thread(target=self.play_client_video, args=(), name="receiveVideoThread")
-        play_thread = threading.Thread(target=self.play_user_video, args=(), name="playVideoThread")
+        play_thread = threading.Thread(target=self.play_video, args=(), name="playVideoThread")
+        get_thread.start()
+        play_thread.start()
+
 
         try:
             get_thread.join()
-            send_thread.join()
-            recieve_thread.join()
             play_thread.join()
         except KeyboardInterrupt:
             print("Stopping network audio threads.")
+            self.camera.release()
+            cv2.destroyAllWindows()
             pass
 
 
@@ -144,19 +154,9 @@ class videoConnect:
 
 
 
-    def test(self):
         
-        get = threading.Thread(target=self.get_video, args=(), name="getVideoThread")
-        play = threading.Thread(target=self.play_user_video, args=(), name="playVideoThread")
-        get.start()
-        play.start()
 
-        try:
-            get.join()
-            play.join()
-        except KeyboardInterrupt:
-            print("Stopping network audio threads.")
-            pass
+
 
 
 
