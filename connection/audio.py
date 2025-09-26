@@ -7,7 +7,7 @@ File Description: Manages video connection aspects.
 Repository: https://github.com/IanDMacDougall/lightwave
 """
 
-from header import header
+from .header import header
 
 import threading
 import queue
@@ -19,9 +19,9 @@ class audioConnect:
     def __init__(self, volume=100, inputIndex=0, outputIndex=1):
         self.headerClass = header()
 
-        self.samplerate = 48000
-        self.channels = 2
-        self.dtype =  np.float32
+        sd.default.samplerate = 48000
+        sd.default.channels = 2
+        sd.default.dtype = np.float32
 
         self.audio_volume = volume
 
@@ -47,7 +47,7 @@ class audioConnect:
             audioData = indata.tobytes()
             self.headerClass.send_data(socket=socket, addr=client_address, data_type=0, seq_num=0, data_send=audioData, timestamp=int(t.time()))
 
-        with sd.InputStream(callback=input_audio_callback, samplerate=self.samplerate, channels=self.channels, dtype=self.dtype, device=self.inputDevice) as in_stream:
+        with sd.InputStream(callback=input_audio_callback, device=self.inputDevice) as in_stream:
             try:
                 in_stream.start()
                 while self.sending and not self.mute:
@@ -55,7 +55,8 @@ class audioConnect:
             except KeyboardInterrupt:
                 print("Stopped stream_audio...")
             finally:
-                in_stream.stop()
+                if not in_stream.stopped():
+                    in_stream.stop()
 
 
     """
@@ -70,7 +71,7 @@ class audioConnect:
                 pass
             try:
                 outputData = self.audio_queue.get_nowait()
-                outputData = outputData.reshape(-1, self.channels)
+                outputData = outputData.reshape(-1, sd.default.channels)
 
                 if outputData is None:
                     # no data is received, nothing is outputed
@@ -91,7 +92,8 @@ class audioConnect:
             except Exception as E:
                 print(f"Audio Callback error : {E}")
                 pass
-        with sd.OutputStream(callback=out_audio_callback, samplerate=self.samplerate, channels=self.channels, dtype=self.dtype, device=self.outputDevice) as out_stream:
+
+        with sd.OutputStream(callback=out_audio_callback, device=self.outputDevice) as out_stream:
             try:
                 out_stream.start()
                 while self.sending:
@@ -100,7 +102,9 @@ class audioConnect:
             except KeyboardInterrupt:
                 print("Stopped play_audio...")
             finally:
-                out_stream.stop()
+                if not out_stream.stopped():
+                    out_stream.stop()
+
 
     """
     Starts threads for audio sending & receiving 

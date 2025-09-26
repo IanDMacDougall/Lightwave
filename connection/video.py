@@ -17,7 +17,7 @@ import numpy as np
 import time
 
 class videoConnect:
-    def __init__(self, deviceIndex, height, width):
+    def __init__(self, deviceIndex=0, height=640, width=480):
         self.camera = cv2.VideoCapture(deviceIndex)
 
         self.resolution = [height, width]

@@ -7,7 +7,7 @@ File Description: Manages video connection aspects.
 Repository: https://github.com/IanDMacDougall/lightwave
 """
 
-from header import header
+from .header import header
 
 import threading
 import queue

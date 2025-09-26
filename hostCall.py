@@ -7,10 +7,10 @@ File Description: Enables hosting calls within the Lightwave Communications plat
 Repository: https://github.com/IanDMacDougall/Lightwave
 """
 
-from audioConnect import audioConnect
-from videoConnect import videoConnect
-from chatConnect import chatConnect
-from header import header
+from connection.audio import audioConnect
+from connection.video import videoConnect
+from connection.chat import chatConnect
+from connection.header import header
 import joinKey
 
 import socket 

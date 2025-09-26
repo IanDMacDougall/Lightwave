@@ -1,0 +1,1 @@
+Must include mention / attributes to Sounddevice in corespondence to MIT license
