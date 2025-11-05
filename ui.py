@@ -165,7 +165,7 @@ class HomeTab(QWidget):
         # Creates scheduled calls list header
         list_header = QListWidgetItem(f"Scheuled Calls")
         list_header.setFlags(Qt.NoItemFlags)  # Make the header non-selectable and non-interactive
-        self.scheduled_calls_list.addItem(list_header)
+        self.schedule_calls_list.addItem(list_header)
 
         # Sort scheduled calls by date
         sorted_calls = sorted(scheduled_calls, key=lambda x: x["date"])
@@ -180,11 +180,11 @@ class HomeTab(QWidget):
                 # Add a header for the different date
                 date_header = QListWidgetItem(f"\nDate: {current_date}")
                 date_header.setFlags(Qt.NoItemFlags)  # Make the header non-selectable and non-interactive
-                self.scheduled_calls_list.addItem(date_header)
+                self.schedule_calls_list.addItem(date_header)
 
             # Add calls to list
             item_text = f"Time: {call['time']}"
-            self.scheduled_calls_list.addItem(item_text)
+            self.schedule_calls_list.addItem(item_text)
 
     '''
     Runs once Host Call button is clicked
