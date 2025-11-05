@@ -24,13 +24,9 @@ from PySide6.QtWidgets import (QApplication, QCalendarWidget, QCheckBox, QComboB
                                 QListWidget, QListWidgetItem, QMainWindow, QMessageBox,
                                 QPushButton, QSlider, QSplashScreen, QTableWidget,
                                 QTableWidgetItem, QTextEdit, QTimeEdit, QVBoxLayout,
-                                QWidget, QHeaderView, QInputDialog, QTabWidget)
+                                QWidget, QHeaderView, QInputDialog, QTabWidget, QGroupBox)
 
 from connection.header import header
-from connection.video import videoConnect
-from connection.audio import audioConnect
-from connection.chat import chatConnect
-
 
 from utilities import (SCHEDULED_CALLS_FILE, CONTACTS_FILE, SETTING_FILE, 
                        app_data_dir, call_history,
@@ -341,31 +337,25 @@ class SettingsTab(QWidget):
 
         global DEFAULT_SETTINGS
         DEFAULT_SETTINGS = {
-            "volume": 100,
+            "resolution": "(640,480)",
+            "language": "English",
+            "dateFormat": "mm/dd/yyyy",
+            "timeFormat": "h:mm AP",
             "notifications": "True",
-            "resolution": "(640,480)"
+            "videoDevice": "Device 1",
+            "inputDevice": "Device 1",
+            "inputVolume": 100,
+            "outputVolume": 100
         }
         settings = self.load_settings()
         
         # Main layout for tab
-        layout = QFormLayout()
-        
-        # change audio to slider, 0 -> 100 actual 0.0 -> 1.0 
-        # Audio Volume settings
-        audio_volume_label = QLabel("Audio Volume:")
-        global audio_volume_slider
-        audio_volume_slider = QSlider(Qt.Horizontal)
-        audio_volume_slider.setMinimum(0)
-        audio_volume_slider.setMaximum(100)
-        audio_volume_slider.setValue(settings['volume'])  # Default value
+        layout = QVBoxLayout()
 
-        # Notification settings
-        notifications_label = QLabel("Notifications:")
-        global notifications_checkbox
-        notifications_checkbox = QCheckBox("Enable Notifications")
-        notifications_checkbox.setChecked(settings['notifications'] == "True")
-        
-        # resolution       
+        ### General Settings Section
+        general_group = QGroupBox("General Settings")
+        general_layout = QFormLayout()
+        # Resolution      
         resolution_label = QLabel("Resolution:")
         global resolution_combobox
         resolution_list = ["(640,360)","(640,480)","(800,600)","(1024,768)","(1280,720)","(1360,768)","(1440,900)","(1920,1080)","(2560,1440)","(3440,1440)","(3840,2160)"]
@@ -373,15 +363,108 @@ class SettingsTab(QWidget):
         self.resolution_combobox = resolution_combobox
         self.resolution_combobox.addItems(resolution_list)
         self.resolution_combobox.setCurrentIndex(resolution_list.index(settings['resolution']))
+        # Language
+        language_label = QLabel("Language")
+        global language_combobox
+        language_list = ["English"]
+        language_combobox = QComboBox()
+        self.language_combobox = language_combobox
+        self.language_combobox.addItems(language_list)
+        self.language_combobox.setCurrentIndex(language_list.index(settings['language']))
+        # Date Format
+        dateFormat_label = QLabel("Date Format")
+        global dateFormat_combobox
+        dateFormat_list = ["mm/dd/yyyy"]
+        dateFormat_combobox = QComboBox()
+        self.dateFormat_combobox = dateFormat_combobox
+        self.dateFormat_combobox.addItems(dateFormat_list)
+        self.dateFormat_combobox.setCurrentIndex(dateFormat_list.index(settings['dateFormat']))
+        # Time Format
+        timeFormat_label = QLabel("Time Format")
+        global timeFormat_combobox
+        timeFormat_list = ["h:mm AP"]
+        timeFormat_combobox = QComboBox()
+        self.timeFormat_combobox = timeFormat_combobox
+        self.timeFormat_combobox.addItems(timeFormat_list)
+        self.timeFormat_combobox.setCurrentIndex(timeFormat_list.index(settings['timeFormat']))
+        # Notification settings
+        notifications_label = QLabel("Notifications:")
+        global notifications_checkbox
+        notifications_checkbox = QCheckBox("Enable Notifications")
+        notifications_checkbox.setChecked(settings['notifications'] == "True")
+        # General Layout
+        general_layout.addRow(resolution_label, self.resolution_combobox)
+        general_layout.addRow(language_label, self.language_combobox)
+        general_layout.addRow(dateFormat_label, self.dateFormat_combobox)
+        general_layout.addRow(timeFormat_label, self.timeFormat_combobox)
+        general_layout.addRow(notifications_label, notifications_checkbox)
+        general_group.setLayout(general_layout)
+
+
+        ### Video Settings Section
+        videoSettings_group = QGroupBox("Video Settings")
+        videoSettings_layout = QFormLayout()
+        # Camera Device
+        videoDevice_label = QLabel("Camera Device: ")
+        global videoDevice_combobox
+        videoDevice_list = ["Device 1"] # //Needs to be the device accessable on the device
+        videoDevice_combobox = QComboBox()
+        self.videoDevice_combobox = videoDevice_combobox
+        self.videoDevice_combobox.addItems(videoDevice_list)
+        self.videoDevice_combobox.setCurrentIndex(videoDevice_list.index(settings['videoDevice']))
+        # Connection Camera Resolution ?
+        # User Camera Resolution ?
+        # Video Settings Layout
+        videoSettings_layout.addRow(videoDevice_label, self.videoDevice_combobox)
+        videoSettings_group.setLayout(videoSettings_layout)
+
+
+        ### Audio Settings Section
+        audioSettings_group = QGroupBox("Audio Settings")
+        audioSettings_layout = QFormLayout()
+        # Input Device
+        inputDevice_label = QLabel("Input Device:")
+        global inputDevice_combobox
+        inputDevice_list = ["Device 1"]
+        inputDevice_combobox = QComboBox()
+        self.inputDevice_combobox = inputDevice_combobox
+        self.inputDevice_combobox.addItems(inputDevice_list)
+        self.inputDevice_combobox.setCurrentIndex(inputDevice_list.index(settings['inputDevice']))
+        # Device Input Volume
+        inputVolume_label = QLabel("Input Device Volume:")
+        global inputVolume_slider
+        inputVolume_slider = QSlider(Qt.Horizontal)
+        inputVolume_slider.setMinimum(0)
+        inputVolume_slider.setMaximum(100)
+        inputVolume_slider.setValue(settings['inputVolume'])
+        # Output Volume
+        outputVolume_label = QLabel("Output Volume:")
+        global outputVolume_slider
+        outputVolume_slider = QSlider(Qt.Horizontal)
+        outputVolume_slider.setMinimum(0)
+        outputVolume_slider.setMaximum(100)
+        outputVolume_slider.setValue(settings['outputVolume'])
+        # Playback ?
+        # Playback Volume ?
+        # Audio Settings Layout
+        audioSettings_layout.addRow(inputDevice_label, self.inputDevice_combobox)
+        audioSettings_layout.addRow(inputVolume_label, inputVolume_slider)
+        audioSettings_layout.addRow(outputVolume_label, outputVolume_slider)
+        audioSettings_group.setLayout(audioSettings_layout)
+
+        
+        ### Advanced Settings Section
+        # File Location
+
 
         # Save settings button 
         save_button = QPushButton("Save Settings")
         save_button.clicked.connect(self.save_settings)
 
         # Layout
-        layout.addRow(audio_volume_label, audio_volume_slider)
-        layout.addRow(notifications_label, notifications_checkbox)
-        layout.addRow(resolution_label, self.resolution_combobox)
+        layout.addWidget(general_group)
+        layout.addWidget(videoSettings_group)
+        layout.addWidget(audioSettings_group)
         layout.addWidget(save_button)
         
         # Set layout
@@ -409,8 +492,6 @@ class SettingsTab(QWidget):
     Runs when you click Save Settings button
     '''
     def save_settings(self):
-        #audioConnectClass.set_volume_level(audio_volume_slider.value())
-        #videoConnectClass.set_resolution(eval(self.resolution_combobox.currentText()))
 
         volume = audio_volume_slider.value()
         notification = notifications_checkbox.isChecked()
