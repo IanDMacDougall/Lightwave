@@ -1,14 +1,9 @@
 from connection.video import videoConnect
 
+from ui import LightwaveCommunications
 
-video = videoConnect(0, 640, 480)
-
-video.test()
-
-
-
-
-
+if __name__ == "__main__":
+    app = LightwaveCommunications.create_app()
 
 
 

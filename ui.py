@@ -2,8 +2,9 @@
 Project: Lightwave Communications
 Authors: Ian MacDougall, Gage Pavia
 Date Created: 12 October 2023
-Last Modified: 15 September 2025
+Last Modified: 5 November 2025
 File Description: Manages the user interface components for the application.
+Upadte Description: Updated to PySide6
 Repository: https://github.com/IanDMacDougall/Lightwave
 """
 
@@ -12,59 +13,59 @@ Repository: https://github.com/IanDMacDougall/Lightwave
 #
 
 import csv
+import json
 from datetime import datetime as dt
 
-from PyQt5.QtCore import QDateTime, QDate, Qt, QTime, QTimer, pyqtSlot
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtWidgets import (QApplication, QCalendarWidget, QCheckBox, QComboBox,
-                             QDialog, QDialogButtonBox, QDateTimeEdit, QFileDialog,
-                             QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
-                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton,
-                             QSlider, QSplashScreen, QTabWidget, QTableWidget, QTableWidgetItem, 
-                             QTextEdit, QTimeEdit, QVBoxLayout, QWidget, QHeaderView, QInputDialog)
-
+from PySide6.QtCore import QDateTime, QDate, Qt, QTime, QTimer, Slot
+from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtWidgets import (QApplication, QCalendarWidget, QCheckBox, QComboBox,
+                                QDialog, QDialogButtonBox, QDateTimeEdit, QFileDialog,
+                                QFormLayout, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
+                                QListWidget, QListWidgetItem, QMainWindow, QMessageBox,
+                                QPushButton, QSlider, QSplashScreen, QTableWidget,
+                                QTableWidgetItem, QTextEdit, QTimeEdit, QVBoxLayout,
+                                QWidget, QHeaderView, QInputDialog, QTabWidget)
 
 from connection.header import header
-# from connection.audio import 
 from connection.video import videoConnect
-# from connection.chat import
+from connection.audio import audioConnect
+from connection.chat import chatConnect
 
+
+from utilities import (SCHEDULED_CALLS_FILE, CONTACTS_FILE, SETTING_FILE, 
+                       app_data_dir, call_history,
+                       get_scheduled_calls, remove_past_scheduled_calls,
+                       ensure_directory_exists, save_data, load_data)
+
+
+import os
+
+#
+# Set up
+#
 
 headerClass = header()
-#audioConnectClass = audioConnect()
-#videoConnectClass = videoConnect()
-from utilities import *
 
-# needed for linux
-import os
+
 print(os.name + " - OS name")
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/lib/qt/plugins/platforms"
 
 '''
-# Constants
-'''
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-
-SCHEDULED_CALLS_FILE = os.path.join(PROJECT_ROOT, "data", "scheduled_calls.json")
-CONTACTS_FILE = os.path.join(PROJECT_ROOT, "data", "contacts.json")
-SETTING_FILE = os.path.join(PROJECT_ROOT, "data", "settings.json")
-
-'''
-# Main Class
+Main Class
 '''
 
 class LightwaveCommunications(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Lightwave Communications")
-        self.setGeometry(100, 100, 800, 600)  # Set window size
-        self.setFixedSize(800, 600)  # Enforce a fixed size for window
+        self.setGeometry(100, 100, 800, 600) # Sets Widnow Size
+        self.setFixedSize(800, 600) # Enforce a fixed size for window
 
-        # Main tab widget
+        # Main Tab widget
         self.tabs = QTabWidget(self)
         self.setCentralWidget(self.tabs)
 
-        # Create instances of tabs
+        # Create instance of tabs
         self.home_tab = HomeTab()
         self.history_tab = HistoryTab()
 
@@ -77,9 +78,12 @@ class LightwaveCommunications(QMainWindow):
         self.tabs.addTab(self.history_tab, "History")
         self.tabs.addTab(AnalyticsTab(), "Analytics")
         self.tabs.addTab(AboutTab(), "About")
+
+
 #
 # Tab Classes
 #
+
 
 '''
 Home Tab ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~
@@ -91,20 +95,20 @@ class HomeTab(QWidget):
         # Main layout for tab
         layout = QVBoxLayout()
 
-        # Top layout for buttons, clock, and scheduled calls list
+        # Top layout for buttons, clock and scheduled calls list
         top_layout = QHBoxLayout()
         top_layout.setAlignment(Qt.AlignCenter)
 
         # Call buttons
         join_button = QPushButton("Join Call", self)
-        join_button.clicked.connect(self.join_call)
+        join_button.clicked.connect(self.join_call) # initiates join call
         host_button = QPushButton("Host Call", self)
         host_button.clicked.connect(self.host_call)
 
         join_button.setFixedSize(100, 40)
         host_button.setFixedSize(100, 40)
 
-        # Clock widget
+        # Clock Widget
         self.clock_widget = QDateTimeEdit(QDateTime.currentDateTime(), self)
         self.clock_widget.setReadOnly(True)
         self.clock_widget.setDisplayFormat("h:mm AP")
@@ -122,53 +126,44 @@ class HomeTab(QWidget):
         self.timer.timeout.connect(self.update_clock)
         self.timer.start(1000)
 
-        # Create list of scheduled calls
-        self.scheduled_calls_list = QListWidget()
-        self.scheduled_calls_list.setFixedWidth(150)
-        self.scheduled_calls_list.setFixedHeight(200)
+        # Create list of schedule calls
+        self.schedule_calls_list = QListWidget()
+        self.schedule_calls_list.setFixedWidth(150)
+        self.schedule_calls_list.setFixedHeight(200)
 
-        # Load scheduled calls to table
-        self.update_scheduled_calls()
-
-        # Set timer to update scheduled calls list every second
-        self.update_calls_timer = QTimer(self)
-        self.update_calls_timer.timeout.connect(self.update_scheduled_calls)
-        self.update_calls_timer.start(3000)  # Update every 3 seconds
-
-        # Ensure the scheduled calls list can be focused to receive key events
-        self.scheduled_calls_list.setFocusPolicy(Qt.StrongFocus)
+        # Ensure the scheduled calls list can be focused to recieve key events
+        self.schedule_calls_list.setFocusPolicy(Qt.StrongFocus)
 
         # Add widgets to layout
         top_layout.addWidget(join_button)
         top_layout.addWidget(host_button)
         top_layout.addWidget(self.clock_widget)
-        top_layout.addWidget(self.scheduled_calls_list)
+        top_layout.addWidget(self.schedule_calls_list)
 
-        # Display layout
+        # Display Layout
         layout.addLayout(top_layout)
         self.setLayout(layout)
 
-    def keyPressEvent(self, event):   # Allows users to manually delete scheduled calls
-        if self.scheduled_calls_list.hasFocus():  # hasFocus makes line interactable
+    def keyPressEvent(self, event):
+        if self.schedule_calls_list.hasFocus():
             if event.key() in [Qt.Key_Backspace, Qt.Key_Delete]:
-                selected_items = self.scheduled_calls_list.selectedItems()  
-                if selected_items: 
-                    item_text = selected_items[0].text()  
-                    for call in scheduled_calls:  
-                        scheduled_calls.remove(call)  # Remove the matched call from the scheduled calls list
-                        save_data(SCHEDULED_CALLS_FILE, scheduled_calls)  
-                        self.update_scheduled_calls()  
-                        break  
-
-
+                selected_items = self.schedule_calls_list.selectedItems()
+                if selected_items:
+                    item_text = selected_items[0].text()
+                    for call in scheduled_calls:
+                        scheduled_calls.remove(call) # Remove the matched call from the scheduled calls list
+                        save_data(SCHEDULED_CALLS_FILE, scheduled_calls)
+                        self.update_scheduled_calls()
+                        break
+    
     def update_scheduled_calls(self):
-        remove_past_scheduled_calls()  # Ensure the list is up to date before refreshing the UI
-        self.scheduled_calls_list.clear()  # Clear the existing list to avoid duplication
+        remove_past_scheduled_calls()
+        self.schedule_calls_list.clear()
 
-        global scheduled_calls   # Import the global list
+        global scheduled_calls
 
         # Creates scheduled calls list header
-        list_header = QListWidgetItem(f"Scheduled Calls")
+        list_header = QListWidgetItem(f"Scheuled Calls")
         list_header.setFlags(Qt.NoItemFlags)  # Make the header non-selectable and non-interactive
         self.scheduled_calls_list.addItem(list_header)
 
@@ -225,6 +220,7 @@ class HomeTab(QWidget):
     posts the key for the other user, using a local key
     '''
     def host_local(self):
+        from utilities import copy_to_clipboard
         from hostCall import hostLocal, get_key_local
         peer_key = get_key_local()
         self.setWindowTitle("Local Host")
@@ -254,6 +250,7 @@ class HomeTab(QWidget):
     posts the key for the other user, using a public key
     '''
     def host_public(self):
+        from utilities import copy_to_clipboard
         from hostCall import hostPublic, get_key_public
         peer_key = get_key_public()
         self.setWindowTitle("Public Host")
@@ -502,7 +499,7 @@ class AnalyticsTab(QWidget):
         # Set layout on tab
         self.setLayout(layout)
 
-    @pyqtSlot()
+    @Slot()
     def update_analytics(self):
         audio_latency = headerClass.getAudioLatency()
         audio_packet_loss = headerClass.getAudioPacketLoss()
@@ -761,8 +758,8 @@ Application launch
 '''
 
 if __name__ == "__main__":
-    
     app = QApplication([])
+    
     
     # Ensure directory
     ensure_directory_exists(app_data_dir)  
@@ -785,4 +782,4 @@ if __name__ == "__main__":
     QTimer.singleShot(3000, window.show)
     
     # Execute
-    app.exec_()
+    app.exec()
