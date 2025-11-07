@@ -1,13 +1,13 @@
 [
     {
-        "resolution": "(640,480)",
+        "resolution": "(800,600)",
         "language": "English",
         "dateFormat": "mm/dd/yyyy",
         "timeFormat": "h:mm AP",
-        "notifications": "True",
+        "notifications": false,
         "videoDevice": "Device 1",
         "inputDevice": "Device 1",
-        "inputVolume": 100,
-        "outputVolume": 100
+        "inputVolume": 80,
+        "outputVolume": 33
     }
 ]

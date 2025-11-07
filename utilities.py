@@ -102,6 +102,53 @@ def load_data(file_name):
     except FileNotFoundError:
         return []
     
+
+# Saving Settings
+
+'''
+Saves the default settings
+'''
+def save_default(): # consider check for settings integrity?
+    DEFAULT_SETTINGS = {
+        "resolution": "(640,480)",
+        "language": "English",
+        "dateFormat": "mm/dd/yyyy",
+        "timeFormat": "h:mm AP",
+        "notifications": "True",
+        "videoDevice": "Device 1",
+        "inputDevice": "Device 1",
+        "inputVolume": 100,
+        "outputVolume": 100
+    }
+    with open(SETTING_FILE, "w", encoding="utf-8") as f:
+        json.dump([DEFAULT_SETTINGS], f, indent=4)
+    return DEFAULT_SETTINGS.copy()
+
+'''
+Loads settings once application is started
+'''
+def load_settings():
+    try:
+        with open(SETTING_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)[0]
+    except (FileNotFoundError, json.JSONDecodeError):
+        return save_default()
+    
+'''
+Should update the desired setting
+'''
+def update_settings(settingName, settingNewValue):
+    with open(SETTING_FILE, "r", encoding="utf-8") as f:
+        settings = json.load(f)[0]
+
+    settings[settingName] = settingNewValue
+
+    with open(SETTING_FILE, 'w', encoding="utf-8") as f:
+        json.dump(settings, f)
+    
+
+
+
 # 
 # Text Functions
 #

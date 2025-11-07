@@ -31,7 +31,8 @@ from connection.header import header
 from utilities import (SCHEDULED_CALLS_FILE, CONTACTS_FILE, SETTING_FILE, 
                        app_data_dir, call_history,
                        get_scheduled_calls, remove_past_scheduled_calls,
-                       ensure_directory_exists, save_data, load_data)
+                       ensure_directory_exists, save_data, load_data,
+                       load_settings)
 
 
 import os
@@ -54,8 +55,10 @@ class LightwaveCommunications(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Lightwave Communications")
-        self.setGeometry(100, 100, 800, 600) # Sets Widnow Size
-        self.setFixedSize(800, 600) # Enforce a fixed size for window
+        settings = load_settings()
+        resolutions = tuple(map(int, settings['resolution'].strip("()").split(",")))
+        self.setGeometry(100, 100, resolutions[0], resolutions[1]) # Sets Widnow Size
+        #self.setFixedSize(resolutions[0], resolutions[1]) # Enforce a fixed size for window
 
         # Main Tab widget
         self.tabs = QTabWidget(self)
@@ -68,12 +71,16 @@ class LightwaveCommunications(QMainWindow):
         # Add tabs
         self.tabs.addTab(self.home_tab, "Home")
         self.tabs.addTab(ScheduleCallTab(self.home_tab), "Schedule Call")
-        self.tabs.addTab(SettingsTab(), "Settings")
+        self.tabs.addTab(SettingsTab(HomeTab=self.home_tab, parent=self), "Settings")
         self.tabs.addTab(NotificationsTab(get_scheduled_calls()), "Notifications")
         self.tabs.addTab(ContactsTab(), "Contacts")
         self.tabs.addTab(self.history_tab, "History")
         self.tabs.addTab(AnalyticsTab(), "Analytics")
         self.tabs.addTab(AboutTab(), "About")
+
+    def update_res(self, updatedResolution):
+        resolutions = tuple(map(int, updatedResolution.strip("()").split(",")))
+        self.resize(resolutions[0], resolutions[1])
 
 
 #
@@ -280,6 +287,9 @@ class HomeTab(QWidget):
     def update_clock(self):
         self.clock_widget.setDateTime(QDateTime.currentDateTime())
 
+    def update_timeFormat(self, timeFormat):
+        self.clock_widget.setDisplayFormat(timeFormat)
+
 
 '''
 Schedule Call Tab ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~
@@ -332,22 +342,13 @@ class ScheduleCallTab(QWidget):
 Settings Tab ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~
 '''
 class SettingsTab(QWidget):    
-    def __init__(self, parent=None):
+    def __init__(self, HomeTab=None, parent=None):
         super().__init__(parent)
+        self.main_window = parent
+        self.home_tab = HomeTab
 
-        global DEFAULT_SETTINGS
-        DEFAULT_SETTINGS = {
-            "resolution": "(640,480)",
-            "language": "English",
-            "dateFormat": "mm/dd/yyyy",
-            "timeFormat": "h:mm AP",
-            "notifications": "True",
-            "videoDevice": "Device 1",
-            "inputDevice": "Device 1",
-            "inputVolume": 100,
-            "outputVolume": 100
-        }
-        settings = self.load_settings()
+
+        settings = load_settings()
         
         # Main layout for tab
         layout = QVBoxLayout()
@@ -357,7 +358,6 @@ class SettingsTab(QWidget):
         general_layout = QFormLayout()
         # Resolution      
         resolution_label = QLabel("Resolution:")
-        global resolution_combobox
         resolution_list = ["(640,360)","(640,480)","(800,600)","(1024,768)","(1280,720)","(1360,768)","(1440,900)","(1920,1080)","(2560,1440)","(3440,1440)","(3840,2160)"]
         resolution_combobox = QComboBox()
         self.resolution_combobox = resolution_combobox
@@ -365,7 +365,6 @@ class SettingsTab(QWidget):
         self.resolution_combobox.setCurrentIndex(resolution_list.index(settings['resolution']))
         # Language
         language_label = QLabel("Language")
-        global language_combobox
         language_list = ["English"]
         language_combobox = QComboBox()
         self.language_combobox = language_combobox
@@ -373,25 +372,23 @@ class SettingsTab(QWidget):
         self.language_combobox.setCurrentIndex(language_list.index(settings['language']))
         # Date Format
         dateFormat_label = QLabel("Date Format")
-        global dateFormat_combobox
-        dateFormat_list = ["mm/dd/yyyy"]
+        dateFormat_list = ["mm/dd/yyyy", "dd/mm/yyyy", "mm-dd-yyyy", "dd-mm-yyyy", "mm.dd.yyyy", "dd.mm.yyyy","yyyy/mm/dd", "yyyy/dd/mm", "yyyy-mm-dd", "yyyy-dd-mm", "yyyy.mm.dd", "yyyy.dd.mm"]
         dateFormat_combobox = QComboBox()
         self.dateFormat_combobox = dateFormat_combobox
         self.dateFormat_combobox.addItems(dateFormat_list)
         self.dateFormat_combobox.setCurrentIndex(dateFormat_list.index(settings['dateFormat']))
         # Time Format
         timeFormat_label = QLabel("Time Format")
-        global timeFormat_combobox
-        timeFormat_list = ["h:mm AP"]
+        timeFormat_list = ["h:mm AP", "hh:mm AP", "h:mm", "hh:mm", "HH:mm"]
         timeFormat_combobox = QComboBox()
         self.timeFormat_combobox = timeFormat_combobox
         self.timeFormat_combobox.addItems(timeFormat_list)
         self.timeFormat_combobox.setCurrentIndex(timeFormat_list.index(settings['timeFormat']))
         # Notification settings
         notifications_label = QLabel("Notifications:")
-        global notifications_checkbox
         notifications_checkbox = QCheckBox("Enable Notifications")
-        notifications_checkbox.setChecked(settings['notifications'] == "True")
+        self.notifications_checkbox = notifications_checkbox
+        self.notifications_checkbox.setChecked(settings['notifications'] == "True")
         # General Layout
         general_layout.addRow(resolution_label, self.resolution_combobox)
         general_layout.addRow(language_label, self.language_combobox)
@@ -406,7 +403,6 @@ class SettingsTab(QWidget):
         videoSettings_layout = QFormLayout()
         # Camera Device
         videoDevice_label = QLabel("Camera Device: ")
-        global videoDevice_combobox
         videoDevice_list = ["Device 1"] # //Needs to be the device accessable on the device
         videoDevice_combobox = QComboBox()
         self.videoDevice_combobox = videoDevice_combobox
@@ -424,7 +420,6 @@ class SettingsTab(QWidget):
         audioSettings_layout = QFormLayout()
         # Input Device
         inputDevice_label = QLabel("Input Device:")
-        global inputDevice_combobox
         inputDevice_list = ["Device 1"]
         inputDevice_combobox = QComboBox()
         self.inputDevice_combobox = inputDevice_combobox
@@ -432,18 +427,18 @@ class SettingsTab(QWidget):
         self.inputDevice_combobox.setCurrentIndex(inputDevice_list.index(settings['inputDevice']))
         # Device Input Volume
         inputVolume_label = QLabel("Input Device Volume:")
-        global inputVolume_slider
         inputVolume_slider = QSlider(Qt.Horizontal)
-        inputVolume_slider.setMinimum(0)
-        inputVolume_slider.setMaximum(100)
-        inputVolume_slider.setValue(settings['inputVolume'])
+        self.inputVolume_slider = inputVolume_slider
+        self.inputVolume_slider.setMinimum(0)
+        self.inputVolume_slider.setMaximum(100)
+        self.inputVolume_slider.setValue(settings['inputVolume'])
         # Output Volume
         outputVolume_label = QLabel("Output Volume:")
-        global outputVolume_slider
         outputVolume_slider = QSlider(Qt.Horizontal)
-        outputVolume_slider.setMinimum(0)
-        outputVolume_slider.setMaximum(100)
-        outputVolume_slider.setValue(settings['outputVolume'])
+        self.outputVolume_slider = outputVolume_slider
+        self.outputVolume_slider.setMinimum(0)
+        self.outputVolume_slider.setMaximum(100)
+        self.outputVolume_slider.setValue(settings['outputVolume'])
         # Playback ?
         # Playback Volume ?
         # Audio Settings Layout
@@ -469,45 +464,51 @@ class SettingsTab(QWidget):
         
         # Set layout
         self.setLayout(layout)  
-    
-    '''
-    Saves the default settings
-    '''
-    def save_default(self):
-        with open(SETTING_FILE, "w", encoding="utf-8") as f:
-            json.dump([DEFAULT_SETTINGS], f, indent=4)
-
-    '''
-    Loads settings once application is started
-    '''
-    def load_settings(self):
-        try:
-            with open(SETTING_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)[0]
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.save_default()
-            return DEFAULT_SETTINGS.copy()
             
     '''
     Runs when you click Save Settings button
     '''
     def save_settings(self):
+        # get inputed values
+        resolution = self.resolution_combobox.currentText()
+        language = self.language_combobox.currentText()
+        dateFormat = self.dateFormat_combobox.currentText()
+        timeFormat = self.timeFormat_combobox.currentText()
+        notifications = self.notifications_checkbox.isChecked()
+        videoDevice = self.videoDevice_combobox.currentText()
+        inputDevice = self.inputDevice_combobox.currentText()
+        inputVolume = self.inputVolume_slider.value()
+        outputVolume = self.outputVolume_slider.value()
 
-        volume = audio_volume_slider.value()
-        notification = notifications_checkbox.isChecked()
-        resolution = resolution_combobox.currentText()
+        # Compare old and new values to see what needs to be updated
+        with open(SETTING_FILE, "r", encoding="utf-8") as f:
+            settings = json.load(f)[0]
 
-        settings = {}
-        settings["volume"] = volume
-        settings["notifications"] = str(notification)
-        settings["resolution"] = resolution
+        if settings['resolution'] != resolution:
+            settings["resolution"] = resolution
+            self.main_window.update_res(resolution)
+        if settings["language"] != language:
+            settings["language"] = language
+            # not yet implemented 
+        if settings["dateFormat"] != dateFormat:
+            settings["dateFormat"] = dateFormat
+        if settings["timeFormat"] != timeFormat:
+            settings["timeFormat"] = timeFormat
+            self.home_tab.update_timeFormat(timeFormat)
+        if settings["notifications"] != notifications:
+            settings["notifications"] = notifications
+            # not yet implemented
+        settings["videoDevice"] = videoDevice
+        settings["inputDevice"] = inputDevice
+        settings["inputVolume"] = inputVolume
+        settings["outputVolume"] = outputVolume
 
         with open(SETTING_FILE, "w", encoding="utf-8") as f:
             json.dump([settings], f, indent=4)
 
         QMessageBox.information(self, "Settings", f"Settings saved.")
-        
-    
+
+
 '''
 Notifications Tab ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~
 '''
@@ -821,9 +822,6 @@ class ClientWindow(QWidget):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setWindowTitle("Client Communications")
-
-        self.setGeometry(100, 100, 800, 600)  # Set window size
-        self.setFixedSize(100, 800)  # Enforce a fixed size for window
 
 
 

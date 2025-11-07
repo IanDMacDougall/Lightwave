@@ -16,14 +16,14 @@ import numpy as np
 import time as t
 
 class audioConnect:
-    def __init__(self, volume=100, inputIndex=0, outputIndex=1):
+    def __init__(self, inputVolume=100, outputVolume=100, inputIndex=0, outputIndex=1):
         self.headerClass = header()
 
         sd.default.samplerate = 48000
         sd.default.channels = 2
         sd.default.dtype = np.float32
 
-        self.audio_volume = volume
+        self.output_volume = outputVolume
 
         self.inputDevice = sd.default.device[inputIndex]
         self.outputDevice = sd.default.device[outputIndex]
@@ -122,8 +122,9 @@ class audioConnect:
             receive_thread.join()
         except KeyboardInterrupt:
             print("Stopping network audio threads")
-    
+    #
     # util
+    #
 
     def set_volume_level(self, volume_level):
-        self.audio_volume = volume_level
+        self.output_volume = volume_level
