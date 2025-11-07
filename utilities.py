@@ -117,6 +117,7 @@ def save_default(): # consider check for settings integrity?
         "notifications": "True",
         "videoDevice": "Device 1",
         "inputDevice": "Device 1",
+        "outputDevice": "Device 1",
         "inputVolume": 100,
         "outputVolume": 100
     }
@@ -146,7 +147,10 @@ def update_settings(settingName, settingNewValue):
     with open(SETTING_FILE, 'w', encoding="utf-8") as f:
         json.dump(settings, f)
     
-
+def get_call_settings():
+    with open(SETTING_FILE, "r", encoding="utf-8") as f:
+        settings = json.load(f)[0]
+    return {"videoDevice":0, "inputDevice":0, "outputDevice":1, "inputVolume":settings["inputVolume"], "outputVolume":settings["outputVolume"]}
 
 
 # 

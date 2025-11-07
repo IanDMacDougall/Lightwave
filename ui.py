@@ -32,7 +32,7 @@ from utilities import (SCHEDULED_CALLS_FILE, CONTACTS_FILE, SETTING_FILE,
                        app_data_dir, call_history,
                        get_scheduled_calls, remove_past_scheduled_calls,
                        ensure_directory_exists, save_data, load_data,
-                       load_settings)
+                       load_settings, get_call_settings)
 
 
 import os
@@ -57,8 +57,7 @@ class LightwaveCommunications(QMainWindow):
         self.setWindowTitle("Lightwave Communications")
         settings = load_settings()
         resolutions = tuple(map(int, settings['resolution'].strip("()").split(",")))
-        self.setGeometry(100, 100, resolutions[0], resolutions[1]) # Sets Widnow Size
-        #self.setFixedSize(resolutions[0], resolutions[1]) # Enforce a fixed size for window
+        self.setGeometry(100, 100, resolutions[0], resolutions[1])
 
         # Main Tab widget
         self.tabs = QTabWidget(self)
@@ -77,6 +76,8 @@ class LightwaveCommunications(QMainWindow):
         self.tabs.addTab(self.history_tab, "History")
         self.tabs.addTab(AnalyticsTab(), "Analytics")
         self.tabs.addTab(AboutTab(), "About")
+
+        # Input settigns for host / join
 
     def update_res(self, updatedResolution):
         resolutions = tuple(map(int, updatedResolution.strip("()").split(",")))
@@ -244,8 +245,10 @@ class HomeTab(QWidget):
 
         response = dialog.exec()
         if response == 1: # dialog accepted
+            callSettings = get_call_settings()
+
             print('Hosting Local')
-            hostLocal()
+            hostLocal(callSettings=callSettings)
 
     '''
     Runs once Host Public is clicked
@@ -274,15 +277,18 @@ class HomeTab(QWidget):
 
         response = dialog.exec()
         if response == 1: # dialog accepted
+            callSettings = get_call_settings()
+
             print('Host Public')
-            hostPublic()
+            hostPublic(callSettings=callSettings)
 
 
     def join_call(self):
         enteredKey, okPressed = QInputDialog.getText(self, "Join Call", "Enter call key: ", QLineEdit.Normal, "")
-        if okPressed:
+        if okPressed and len(enteredKey) > 2:
             from joinCall import peer
-            peer(enteredKey)
+            callSettings = get_call_settings()
+            peer(enteredKey, callSettings=callSettings)
 
     def update_clock(self):
         self.clock_widget.setDateTime(QDateTime.currentDateTime())
@@ -425,6 +431,13 @@ class SettingsTab(QWidget):
         self.inputDevice_combobox = inputDevice_combobox
         self.inputDevice_combobox.addItems(inputDevice_list)
         self.inputDevice_combobox.setCurrentIndex(inputDevice_list.index(settings['inputDevice']))
+        # output Device
+        outputDevice_label = QLabel("Input Device:")
+        outputDevice_list = ["Device 1"]
+        outputDevice_combobox = QComboBox()
+        self.outputDevice_combobox = outputDevice_combobox
+        self.outputDevice_combobox.addItems(outputDevice_list)
+        self.outputDevice_combobox.setCurrentIndex(outputDevice_list.index(settings['outputDevice']))
         # Device Input Volume
         inputVolume_label = QLabel("Input Device Volume:")
         inputVolume_slider = QSlider(Qt.Horizontal)
@@ -443,6 +456,7 @@ class SettingsTab(QWidget):
         # Playback Volume ?
         # Audio Settings Layout
         audioSettings_layout.addRow(inputDevice_label, self.inputDevice_combobox)
+        audioSettings_layout.addRow(outputDevice_label, self.outputDevice_combobox)
         audioSettings_layout.addRow(inputVolume_label, inputVolume_slider)
         audioSettings_layout.addRow(outputVolume_label, outputVolume_slider)
         audioSettings_group.setLayout(audioSettings_layout)
@@ -464,7 +478,7 @@ class SettingsTab(QWidget):
         
         # Set layout
         self.setLayout(layout)  
-            
+           
     '''
     Runs when you click Save Settings button
     '''
@@ -477,6 +491,7 @@ class SettingsTab(QWidget):
         notifications = self.notifications_checkbox.isChecked()
         videoDevice = self.videoDevice_combobox.currentText()
         inputDevice = self.inputDevice_combobox.currentText()
+        outputDevice = self.outputDevice_combobox.currentText()
         inputVolume = self.inputVolume_slider.value()
         outputVolume = self.outputVolume_slider.value()
 
@@ -492,6 +507,7 @@ class SettingsTab(QWidget):
             # not yet implemented 
         if settings["dateFormat"] != dateFormat:
             settings["dateFormat"] = dateFormat
+            # awaiting time
         if settings["timeFormat"] != timeFormat:
             settings["timeFormat"] = timeFormat
             self.home_tab.update_timeFormat(timeFormat)
@@ -500,6 +516,7 @@ class SettingsTab(QWidget):
             # not yet implemented
         settings["videoDevice"] = videoDevice
         settings["inputDevice"] = inputDevice
+        settings["outputDevice"] = outputDevice
         settings["inputVolume"] = inputVolume
         settings["outputVolume"] = outputVolume
 

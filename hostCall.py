@@ -18,12 +18,6 @@ import threading
 import requests
 
 
-audioConnectClass = audioConnect()
-videoConnectClass = videoConnect()
-chatConnectClass = chatConnect()
-headerClass = header()
-
-
 peer_key = ""
 port = 5060
 
@@ -88,27 +82,35 @@ def get_key_public():
 """
 runs when a local call is started
 generates a key based off your local IP address
+    videoDevice - Video Device Index
+    audioDevice - Audio Device Index
 """
-def hostLocal():
+def hostLocal(callSettings):
     hostIP = get_local_ip()
     print("host local")
-    host( hostIP )
+    host( hostIP, callSettings )
 
 
 """
 Runs when a online call is started
 generates a key off your public IP address
 """
-def hostPublic():
+def hostPublic(callSettings):
     hostIP = get_public_ip()
     print("Host public")
-    host( hostIP )
+    host( hostIP, callSettings )
 
 
 """
 Creates a UDP connection from socket through your IP and port number 5060
 """
-def host( hostIP ):
+def host( hostIP, callSettings):
+    print(callSettings)
+    audioConnectClass = audioConnect(inputIndex=callSettings["inputDevice"], outputIndex=callSettings["outputDevice"], inputVolume=callSettings["inputVolume"], outputVolume=callSettings["outputVolume"])
+    videoConnectClass = videoConnect(deviceIndex=callSettings["videoDevice"])
+    chatConnectClass = chatConnect()
+    headerClass = header()
+
     # UDP Socket Setup
     host_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     host_socket.bind( (hostIP, port) )

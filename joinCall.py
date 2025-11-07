@@ -16,15 +16,17 @@ import joinKey
 import socket 
 import threading
 
-audioConnectClass = audioConnect()
-videoConnectClass = videoConnect()
-chatConnectClass = chatConnect()
-headerClass = header()
-
 """
 run when joinning a peer
 """
-def peer( key ): # run by peer
+def peer( key, callSettings ): # run by peer
+    print(callSettings)
+    audioConnectClass = audioConnect(inputIndex=callSettings["inputDevice"], outputIndex=callSettings["outputDevice"], inputVolume=callSettings["inputVolume"], outputVolume=callSettings["outputVolume"])
+    videoConnectClass = videoConnect(deviceIndex=callSettings["videoDevice"])
+    chatConnectClass = chatConnect()
+    headerClass = header()
+
+
     host_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP Socket Setup
 
     # waits for host's key
