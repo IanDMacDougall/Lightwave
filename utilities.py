@@ -11,7 +11,7 @@ Repository: https://github.com/IanDMacDougall/Lightwave
 # Imports
 #
 
-import datetime, json, os
+import datetime, json, os, sounddevice as sd, cv2
 
 from PySide6.QtWidgets import QApplication
 
@@ -115,9 +115,9 @@ def save_default(): # consider check for settings integrity?
         "dateFormat": "mm/dd/yyyy",
         "timeFormat": "h:mm AP",
         "notifications": "True",
-        "videoDevice": "Device 1",
-        "inputDevice": "Device 1",
-        "outputDevice": "Device 1",
+        "videoDevice": get_default_video_device(),
+        "inputDevice": get_default_audio_input_device(),
+        "outputDevice": get_default_audio_output_device(),
         "inputVolume": 100,
         "outputVolume": 100
     }
@@ -150,7 +150,7 @@ def update_settings(settingName, settingNewValue):
 def get_call_settings():
     with open(SETTING_FILE, "r", encoding="utf-8") as f:
         settings = json.load(f)[0]
-    return {"videoDevice":0, "inputDevice":0, "outputDevice":1, "inputVolume":settings["inputVolume"], "outputVolume":settings["outputVolume"]}
+    return {"videoDevice":get_device_id(settings['videoDevice']), "inputDevice":get_device_id(settings['inputDevice']), "outputDevice":get_device_id(settings['outputDevice']), "inputVolume":settings["inputVolume"], "outputVolume":settings["outputVolume"]}
 
 
 # 
@@ -160,3 +160,71 @@ def get_call_settings():
 def copy_to_clipboard(text):
     clipboard = QApplication.clipboard()
     clipboard.setText(text)
+
+
+
+#
+# Input Device Checks
+#
+
+def get_video_devices(max_devices=10):
+    devices = []
+
+    for i in range(max_devices):
+        try:
+            cap = cv2.VideoCapture(i)
+
+            if cap.isOpened():
+                device = str(i)+": "+cap.getBackendName()
+                devices.append(device)
+                cap.release()
+        except Exception as e:
+            error = e
+        except Warning as w:
+            warm = w
+    
+    return devices
+
+
+def get_audio_input_devices():
+    devices = sd.query_devices()
+    input_devices = []
+    
+    for x in devices:
+        if x['max_input_channels'] != 0:
+            device = str(x['index'])+": "+x['name']
+            input_devices.append(device)
+    return input_devices
+
+
+def get_audio_output_devices():
+    devices = sd.query_devices()
+    output_devices = []
+    
+    for x in devices:
+        if x['max_output_channels'] != 0:
+            device = str(x['index'])+": "+x['name']
+            output_devices.append(device)
+    return output_devices
+
+
+def get_default_video_device():
+    return get_video_devices()[0]
+
+def get_default_audio_input_device():
+    index = sd.default.device[0] # 0 for input
+    device = str(index)+": "+sd.query_devices(device=index)['name']
+    return device
+
+def get_default_audio_output_device():
+    index = sd.default.device[1] # 1 for output
+    device = str(index)+": "+sd.query_devices(device=index)['name']
+    return device
+
+def get_device_id(device):
+    if device[1] == ":":
+        return device[0]
+    elif device[2] == ":":
+        return device[0:2]
+    else:
+        return device[0:3]

@@ -32,7 +32,8 @@ from utilities import (SCHEDULED_CALLS_FILE, CONTACTS_FILE, SETTING_FILE,
                        app_data_dir, call_history,
                        get_scheduled_calls, remove_past_scheduled_calls,
                        ensure_directory_exists, save_data, load_data,
-                       load_settings, get_call_settings)
+                       load_settings, get_call_settings, get_video_devices,
+                       get_audio_input_devices, get_audio_output_devices)
 
 
 import os
@@ -409,7 +410,7 @@ class SettingsTab(QWidget):
         videoSettings_layout = QFormLayout()
         # Camera Device
         videoDevice_label = QLabel("Camera Device: ")
-        videoDevice_list = ["Device 1"] # //Needs to be the device accessable on the device
+        videoDevice_list = get_video_devices() # //Needs to be the device accessable on the device
         videoDevice_combobox = QComboBox()
         self.videoDevice_combobox = videoDevice_combobox
         self.videoDevice_combobox.addItems(videoDevice_list)
@@ -426,14 +427,14 @@ class SettingsTab(QWidget):
         audioSettings_layout = QFormLayout()
         # Input Device
         inputDevice_label = QLabel("Input Device:")
-        inputDevice_list = ["Device 1"]
+        inputDevice_list = get_audio_input_devices()
         inputDevice_combobox = QComboBox()
         self.inputDevice_combobox = inputDevice_combobox
         self.inputDevice_combobox.addItems(inputDevice_list)
         self.inputDevice_combobox.setCurrentIndex(inputDevice_list.index(settings['inputDevice']))
         # output Device
-        outputDevice_label = QLabel("Input Device:")
-        outputDevice_list = ["Device 1"]
+        outputDevice_label = QLabel("Output Device:")
+        outputDevice_list = get_audio_output_devices()
         outputDevice_combobox = QComboBox()
         self.outputDevice_combobox = outputDevice_combobox
         self.outputDevice_combobox.addItems(outputDevice_list)
@@ -515,7 +516,7 @@ class SettingsTab(QWidget):
             settings["notifications"] = notifications
             # not yet implemented
         settings["videoDevice"] = videoDevice
-        settings["inputDevice"] = inputDevice
+        settings["inputDevice"] = inputDevice # Devices need to be corresponded to device index
         settings["outputDevice"] = outputDevice
         settings["inputVolume"] = inputVolume
         settings["outputVolume"] = outputVolume
