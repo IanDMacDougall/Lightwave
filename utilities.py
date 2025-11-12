@@ -170,8 +170,8 @@ def copy_to_clipboard(text):
 def get_video_devices(max_devices=10):
     devices = []
 
-    for i in range(max_devices):
-        try:
+    for i in range(max_devices): # Causes warning when checking capture with bad index
+        try: 
             cap = cv2.VideoCapture(i)
 
             if cap.isOpened():
@@ -223,8 +223,8 @@ def get_default_audio_output_device():
 
 def get_device_id(device):
     if device[1] == ":":
-        return device[0]
+        return int(device[0])
     elif device[2] == ":":
-        return device[0:2]
+        return int(device[0:2])
     else:
-        return device[0:3]
+        return int(device[0:3])

@@ -22,11 +22,12 @@ class audioConnect:
         sd.default.samplerate = 48000
         sd.default.channels = 2
         sd.default.dtype = np.float32
+        sd.default.device = (inputIndex, outputIndex)
 
         self.output_volume = outputVolume
 
-        self.inputDevice = sd.default.device[inputIndex]
-        self.outputDevice = sd.default.device[outputIndex]
+        self.inputDevice = sd.default.device[0]
+        self.outputDevice = sd.default.device[1]
 
         self.audio_queue = queue.Queue()
 
