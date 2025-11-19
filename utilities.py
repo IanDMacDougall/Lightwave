@@ -168,63 +168,69 @@ def copy_to_clipboard(text):
 #
 
 def get_video_devices(max_devices=10):
-    devices = []
+    devices = ["0: No Device"]
 
     for i in range(max_devices): # Causes warning when checking capture with bad index
         try: 
             cap = cv2.VideoCapture(i)
 
             if cap.isOpened():
-                device = str(i)+": "+cap.getBackendName()
+                device = str(i + 1)+": "+cap.getBackendName()
                 devices.append(device)
                 cap.release()
         except Exception as e:
-            error = e
+            pass
         except Warning as w:
-            warm = w
+            pass
     
     return devices
 
 
 def get_audio_input_devices():
     devices = sd.query_devices()
-    input_devices = []
+    input_devices = ["0: No Device"]
     
     for x in devices:
         if x['max_input_channels'] != 0:
-            device = str(x['index'])+": "+x['name']
+            device = str(x['index'] + 1)+": "+x['name']
             input_devices.append(device)
     return input_devices
 
 
 def get_audio_output_devices():
     devices = sd.query_devices()
-    output_devices = []
+    output_devices = ["0: No Device"]
     
     for x in devices:
         if x['max_output_channels'] != 0:
-            device = str(x['index'])+": "+x['name']
+            device = str(x['index'] + 1)+": "+x['name']
             output_devices.append(device)
     return output_devices
 
 
 def get_default_video_device():
-    return get_video_devices()[0]
+    devices = get_video_devices()
+    try:
+        device = devices[1]
+    except Exception as e:
+        device = devices[0]
+    finally:
+        return device
 
 def get_default_audio_input_device():
     index = sd.default.device[0] # 0 for input
-    device = str(index)+": "+sd.query_devices(device=index)['name']
+    device = str(index + 1)+": "+sd.query_devices(device=index)['name']
     return device
 
 def get_default_audio_output_device():
     index = sd.default.device[1] # 1 for output
-    device = str(index)+": "+sd.query_devices(device=index)['name']
+    device = str(index + 1)+": "+sd.query_devices(device=index)['name']
     return device
 
 def get_device_id(device):
     if device[1] == ":":
-        return int(device[0])
+        return int(device[0]) - 1
     elif device[2] == ":":
-        return int(device[0:2])
+        return int(device[0:2]) - 1
     else:
-        return int(device[0:3])
+        return int(device[0:3]) - 1

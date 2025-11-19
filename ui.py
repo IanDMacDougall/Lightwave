@@ -515,11 +515,16 @@ class SettingsTab(QWidget):
         if settings["notifications"] != notifications:
             settings["notifications"] = notifications
             # not yet implemented
-        settings["videoDevice"] = videoDevice
-        settings["inputDevice"] = inputDevice # Devices need to be corresponded to device index
-        settings["outputDevice"] = outputDevice
-        settings["inputVolume"] = inputVolume
-        settings["outputVolume"] = outputVolume
+        if settings["videoDevice"] != videoDevice:
+            settings["videoDevice"] = videoDevice
+        if settings["inputDevice"] != inputDevice:
+            settings["inputDevice"] = inputDevice # Devices need to be corresponded to device index
+        if settings["outputDevice"] != outputDevice:
+            settings["outputDevice"] = outputDevice
+        if settings["inputVolume"] != inputVolume:
+            settings["inputVolume"] = inputVolume
+        if settings["outputVolume"] != outputVolume:
+            settings["outputVolume"] = outputVolume
 
         with open(SETTING_FILE, "w", encoding="utf-8") as f:
             json.dump([settings], f, indent=4)
