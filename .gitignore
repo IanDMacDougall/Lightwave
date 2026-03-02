@@ -2,10 +2,12 @@
 /venv
 /__pycache__
 /connection/__pycache__
-
+/UI/__pycache__
+/.github
 
 # User Specific Files
 /data
+settings
 
 
 # project
